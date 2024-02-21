@@ -48,10 +48,6 @@ all: tools
 	$(eval EXEC_FILES := $(shell find tools -type f -perm /u=x,g=x,o=x -exec ls {} \; | xargs))
 	cp $(EXEC_FILES) ./build
 
-upload: all
-	$(eval EXEC_FILES := $(shell find build -type f -perm /u=x,g=x,o=x -exec ls {} \; | xargs))
-	scp $(EXEC_FILES) $(USER)@up:~
-
 
 DOCS_RST = $(wildcard docs/sphinx/source/*.rst)
 docs: $(DOCS_RST) $(SOURCES) docs/sphinx/source/conf.py
@@ -64,5 +60,5 @@ remote:
 	rsync -avzh ./* $(USER)@up:~/lib-micro/
 	ssh $(USER)@up "make -C lib-micro all"
 
-.PHONY: all clean static dynamic tools upload docs host-docs remote
-.DEFAULT_GOAL := upload
+.PHONY: all clean static dynamic tools docs host-docs remote
+.DEFAULT_GOAL := all
