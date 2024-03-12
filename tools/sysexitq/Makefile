@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O0 -fPIE -ggdb -Wall -masm=intel -Wmissing-field-initializers -Wno-unused-function -Wno-unused-variable
+CFLAGS = -O0 -no-pie -ggdb -Wall -masm=intel -Wmissing-field-initializers -Wno-unused-function -Wno-unused-variable
 DYNAMIC_CFLAGS = -Wl,-rpath . $(CFLAGS)
 STATIC_CFLAGS = -static -Wl,-R . $(CFLAGS)
 TARGET = sysexitq

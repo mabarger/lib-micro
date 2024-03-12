@@ -68,13 +68,15 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
 }
 
 void do_sysexitq_patch() {
+    u64 patch_addr = 0x7da0;
+    u64 hook_addr  = 0x0740;
     ucode_t ucode_patch[] = {
         /*
         Read uram
         > RDI: uram_address
         < RAX: output
         */
-        #if 1
+        #if 0
         {
             READURAM_DR(RAX, RDI),
             NOP,
@@ -152,10 +154,34 @@ void do_sysexitq_patch() {
             END_SEQWORD
         }
         #endif
+
+        /*
+        Watchpoint
+        */
+        #if 1
+        {
+            LDZX_DSZ64_ASZ32_SC1_DR(TMP5, RDI, 0x18),
+            SUB_DSZ64_DRR(TMP5, RBX, TMP5),
+            UJMPCC_DIRECT_NOTTAKEN_CONDZ_RI(TMP5, patch_addr + 0x08),
+            NOP_SEQWORD
+        },
+        {
+            NOP,
+            NOP,
+            MOVE_DSZ64_DI(RBX, 0x1234),
+            END_SEQWORD
+        },
+        {
+            NOP,
+            MOVE_DSZ64_DI(RBX, 0x5678),
+            DIVSD(XMM0, XMM0, XMM1),
+            END_SEQWORD
+        }
+        #endif
     };
 
-    patch_ucode(0x7da0, ucode_patch, ARRAY_SZ(ucode_patch));
-    hook_match_and_patch(0, 0x0740, 0x7da0);
+    patch_ucode(patch_addr, ucode_patch, ARRAY_SZ(ucode_patch));
+    hook_match_and_patch(0, hook_addr, patch_addr);
 }
 
 // initialize the argp struct. Which will be used to parse and use the args.
@@ -186,17 +212,27 @@ int main(int argc, char* argv[]) {
         usleep(20000);
     }
 
+    crbus_write(0x51b, 0x1);
     if (arguments.patch) { // Patch sysexitq
         do_fix_IN_patch();
         do_sysexitq_patch();
 
         register u64 rax asm("rax");
+        register u64 rbx asm("rbx");
         register u64 rdi asm("rdi");
+        volatile u64 test = 0x1122334455667788;
 
-        rax = 0x00;
-        rdi = 0x10;
+        //for (int i = 0; i < 10; i++) {
+            rbx = 0x1122334455667788;
+            rdi = (u64) &main;
+            asm volatile("sysexitq");
+            printf("rax: 0x%016lx\nrbx: 0x%016lx\nrsi: 0x%016lx\n\n", rax, rbx, rdi);
+        //}
+
+        rbx = 0x1122334455667788;
+        rdi = (u64) &test;
         asm volatile("sysexitq");
-        printf("rax: 0x%016lx\nrsi: 0x%016lx\n", rax, rdi);
+        printf("rax: 0x%016lx\nrbx: 0x%016lx\nrsi: 0x%016lx\n\n", rax, rbx, rdi);
         return 0;
     }
 

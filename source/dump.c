@@ -57,3 +57,14 @@ void crbus_dump(void) {
         printf("%04lx: %016lx %016lx %016lx %016lx\n", i, val0, val1, val2, val3);
     }
 }
+
+void stagingbuf_dump(void) {
+    for (u64 i = 0; i < 0xff8; i += 0x20) {
+        u64 val0 = staging_read(i);
+        u64 val1 = staging_read(i+0x08);
+        u64 val2 = staging_read(i+0x10);
+        u64 val3 = staging_read(i+0x18);
+        printf("%04lx: %016lx %016lx %016lx %016lx\n", i, val0, val1, val2, val3);
+        usleep(1000 * 10);
+    }
+}

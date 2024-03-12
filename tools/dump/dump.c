@@ -20,6 +20,7 @@ static char args_doc[] = "";
 static struct argp_option options[] = {
     {.name="dump_crbus", .key='b', .arg=NULL, .flags=0, .doc="dump uram"},
     {.name="dump_ram", .key='d', .arg=NULL, .flags=0, .doc="dump uram"},
+    {.name="dump_stagingbuf", .key='s', .arg=NULL, .flags=0, .doc="dump staging buffer"},
     {.name="dump_array", .key='a', .arg="array", .flags=0, .doc="dump array"},
     {.name="core", .key='c', .arg="core", .flags=0, .doc="core to patch [0-3]"},
     {0}
@@ -30,6 +31,7 @@ static struct argp_option options[] = {
 struct arguments{
     u8 bus;
     u8 uram;
+    u8 staging;
     s8 array;
     s8 core;
 };
@@ -46,6 +48,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state){
             break;
         case 'b':
             arguments->bus = 1;
+            break;
+        case 's':
+            arguments->staging = 1;
             break;
         case 'a':
             arguments->array = strtol(arg, NULL, 0);
@@ -109,12 +114,17 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if(arguments.uram) {
+    if (arguments.uram) {
         uram_dump();
     }
 
-    if(arguments.bus) {
+    if (arguments.bus) {
         crbus_dump();
+    }
+
+    if (arguments.staging) {
+        setvbuf(stdout, NULL, _IONBF, 0);
+        stagingbuf_dump();
     }
 
     return 0;
